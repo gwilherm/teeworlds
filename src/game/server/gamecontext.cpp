@@ -12,7 +12,8 @@
 #include "gamemodes/dm.h"
 #include "gamemodes/tdm.h"
 #include "gamemodes/ctf.h"
-#include "gamemodes/mod.h"
+#include "gamemodes/infection.h"
+#include "entities/projectile.h"
 
 enum
 {
@@ -216,6 +217,30 @@ void CGameContext::CreateSoundGlobal(int Sound, int Target)
 	}
 }
 
+void CGameContext::CreateAirstrike(vec2 Pos, int Owner) {
+    int Projectiles = 200;
+    vec2 Align{16, 16};
+    for (int x = 0; x < Projectiles; x ++) {
+        CProjectile *pProj = new CProjectile(&m_World, WEAPON_GRENADE,
+            Owner,
+            vec2((x - Projectiles/2)*Align.x + Pos.x, - abs(x - Projectiles/2) * Align.y),
+            vec2(0, 1),
+            (int)(Server()->TickSpeed()*Tuning()->m_GrenadeLifetime),
+            1, true, 0, SOUND_GRENADE_EXPLODE, WEAPON_GRENADE);
+
+        // pack the Projectile and send it to the client Directly
+        CNetObj_Projectile p;
+        pProj->FillInfo(&p);
+
+        CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
+        Msg.AddInt(1);
+        for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
+            Msg.AddInt(((int *)&p)[i]);
+        Server()->SendMsg(&Msg, MSGFLAG_VITAL, Owner);
+        
+    }
+    CreateSound(Pos, SOUND_GRENADE_FIRE);
+}
 
 void CGameContext::SendChatTarget(int To, const char *pText)
 {
@@ -1443,6 +1468,57 @@ void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *p
 	}
 }
 
+void CGameContext::ConZombie(IConsole::IResult *pResult, void *pUserData) {
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    int ClientID = clamp(pResult->GetInteger(0), 0, MAX_CLIENTS - 1);
+    
+    if (!pSelf->m_apPlayers[ClientID])
+        return;
+    
+    pSelf->m_apPlayers[ClientID]->Infect();
+}
+
+void CGameContext::ConCure(IConsole::IResult *pResult, void *pUserData) {
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    int ClientID = clamp(pResult->GetInteger(0), 0, MAX_CLIENTS - 1);
+    
+    if (!pSelf->m_apPlayers[ClientID])
+        return;
+    
+    pSelf->m_apPlayers[ClientID]->Cure();
+}
+
+void CGameContext::ConIZombie(IConsole::IResult *pResult, void *pUserData) {
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    int ClientID = clamp(pResult->GetInteger(0), 0, MAX_CLIENTS - 1);
+    
+    if (!pSelf->m_apPlayers[ClientID])
+        return;
+    
+    pSelf->m_apPlayers[ClientID]->Infect();
+    pSelf->m_apPlayers[ClientID]->m_Zombie = 2;
+}
+
+void CGameContext::ConAirstrike(IConsole::IResult *pResult, void *pUserData) {
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    int ClientID = clamp(pResult->GetInteger(0), 0, MAX_CLIENTS - 1);
+    
+    if (!pSelf->m_apPlayers[ClientID])
+        return;
+    
+    pSelf->m_apPlayers[ClientID]->m_HasAirstrike = true;
+}
+
+void CGameContext::ConSuperJump(IConsole::IResult *pResult, void *pUserData) {
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    int ClientID = clamp(pResult->GetInteger(0), 0, MAX_CLIENTS - 1);
+    
+    if (!pSelf->m_apPlayers[ClientID])
+        return;
+    
+    pSelf->m_apPlayers[ClientID]->m_HasSuperJump = true;
+}
+
 void CGameContext::OnConsoleInit()
 {
 	m_pServer = Kernel()->RequestInterface<IServer>();
@@ -1470,6 +1546,12 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("vote", "r", CFGFLAG_SERVER, ConVote, this, "Force a vote to yes/no");
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
+	
+	Console()->Register("zombie", "i", CFGFLAG_SERVER, ConZombie, this, "Turn someone into a zombie");
+	Console()->Register("cure", "i", CFGFLAG_SERVER, ConCure, this, "Cure someone");
+	Console()->Register("izombie", "i", CFGFLAG_SERVER, ConIZombie, this, "Turn someone into an iZombie");
+	Console()->Register("airstrike", "i", CFGFLAG_SERVER, ConAirstrike, this, "Give airstrike to a player");
+	Console()->Register("superjump", "i", CFGFLAG_SERVER, ConSuperJump, this, "Give superjump to a zombie");
 }
 
 void CGameContext::OnInit(/*class IKernel *pKernel*/)
@@ -1493,14 +1575,14 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	//players = new CPlayer[MAX_CLIENTS];
 
 	// select gametype
-	if(str_comp(g_Config.m_SvGametype, "mod") == 0)
-		m_pController = new CGameControllerMOD(this);
+	if(str_comp(g_Config.m_SvGametype, "dm") == 0)
+		m_pController = new CGameControllerDM(this);
 	else if(str_comp(g_Config.m_SvGametype, "ctf") == 0)
 		m_pController = new CGameControllerCTF(this);
 	else if(str_comp(g_Config.m_SvGametype, "tdm") == 0)
 		m_pController = new CGameControllerTDM(this);
 	else
-		m_pController = new CGameControllerDM(this);
+		m_pController = new CGameControllerInfection(this);
 
 	// setup core world
 	//for(int i = 0; i < MAX_CLIENTS; i++)

@@ -56,6 +56,7 @@ public:
 	bool IncreaseHealth(int Amount);
 	bool IncreaseArmor(int Amount);
 
+    void ClearWeapons();
 	bool GiveWeapon(int Weapon, int Ammo);
 	void GiveNinja();
 
@@ -69,6 +70,9 @@ private:
 	class CPlayer *m_pPlayer;
 
 	bool m_Alive;
+	
+	vec2 m_WallStart;
+	class CWall *m_pWall;
 
 	// weapon info
 	CEntity *m_apHitObjects[10];

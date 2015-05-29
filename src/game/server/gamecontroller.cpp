@@ -33,6 +33,8 @@ IGameController::IGameController(class CGameContext *pGameServer)
 	m_aNumSpawnPoints[0] = 0;
 	m_aNumSpawnPoints[1] = 0;
 	m_aNumSpawnPoints[2] = 0;
+	
+	m_NextZombie = 0;
 }
 
 IGameController::~IGameController()
@@ -209,7 +211,9 @@ static bool IsSeparator(char c) { return c == ';' || c == ' ' || c == ',' || c =
 void IGameController::StartRound()
 {
 	ResetGame();
-
+    
+    DoWarmup(g_Config.m_InfInfectionDelay);
+    
 	m_RoundStartTick = Server()->Tick();
 	m_SuddenDeath = 0;
 	m_GameOverTick = -1;
@@ -221,12 +225,48 @@ void IGameController::StartRound()
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "start round type='%s' teamplay='%d'", m_pGameType, m_GameFlags&GAMEFLAG_TEAMS);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+	
+	CureAll();
 }
 
 void IGameController::ChangeMap(const char *pToMap)
 {
 	str_copy(m_aMapWish, pToMap, sizeof(m_aMapWish));
 	EndRound();
+}
+
+void IGameController::CureAll() {
+    for (int i = 0; i < MAX_CLIENTS; i ++) {
+        if (!GameServer()->m_apPlayers[i])
+            continue;
+        
+        GameServer()->m_apPlayers[i]->Cure();
+    }
+}
+
+int IGameController::PickZombie() {
+    for (int i = 0; i < MAX_CLIENTS; i ++) {
+        CPlayer *pPlayer = GameServer()->m_apPlayers[m_NextZombie];
+        if (!pPlayer) {
+            if (++ m_NextZombie >= MAX_CLIENTS)
+                m_NextZombie = 0;
+            continue;
+        }
+        
+        if (pPlayer->GetTeam() == TEAM_SPECTATORS) {
+            if (++ m_NextZombie >= MAX_CLIENTS)
+                m_NextZombie = 0;
+            continue;
+        }
+        
+        int id = m_NextZombie;
+        pPlayer->Infect();
+        pPlayer->m_Zombie = 2;
+        if (++ m_NextZombie >= MAX_CLIENTS)
+            m_NextZombie = 0;
+        return id;
+    }
+    return -1;
 }
 
 void IGameController::CycleMap()
@@ -305,19 +345,7 @@ void IGameController::CycleMap()
 	str_copy(g_Config.m_SvMap, &aBuf[i], sizeof(g_Config.m_SvMap));
 }
 
-void IGameController::PostReset()
-{
-	for(int i = 0; i < MAX_CLIENTS; i++)
-	{
-		if(GameServer()->m_apPlayers[i])
-		{
-			GameServer()->m_apPlayers[i]->Respawn();
-			GameServer()->m_apPlayers[i]->m_Score = 0;
-			GameServer()->m_apPlayers[i]->m_ScoreStartTick = Server()->Tick();
-			GameServer()->m_apPlayers[i]->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
-		}
-	}
-}
+
 
 void IGameController::OnPlayerInfoChange(class CPlayer *pP)
 {
@@ -381,16 +409,14 @@ bool IGameController::IsFriendlyFire(int ClientID1, int ClientID2)
 	if(ClientID1 == ClientID2)
 		return false;
 
+    if(!GameServer()->m_apPlayers[ClientID1] || !GameServer()->m_apPlayers[ClientID2])
+		return false;
+    
 	if(IsTeamplay())
-	{
-		if(!GameServer()->m_apPlayers[ClientID1] || !GameServer()->m_apPlayers[ClientID2])
-			return false;
-
 		if(GameServer()->m_apPlayers[ClientID1]->GetTeam() == GameServer()->m_apPlayers[ClientID2]->GetTeam())
 			return true;
-	}
-
-	return false;
+    
+	return !!GameServer()->m_apPlayers[ClientID1]->Infected() == !!GameServer()->m_apPlayers[ClientID2]->Infected();
 }
 
 bool IGameController::IsForceBalanced()
@@ -416,7 +442,7 @@ void IGameController::Tick()
 	{
 		m_Warmup--;
 		if(!m_Warmup)
-			StartRound();
+			PickZombie();
 	}
 
 	if(m_GameOverTick != -1)
@@ -731,4 +757,18 @@ int IGameController::ClampTeam(int Team)
 	if(IsTeamplay())
 		return Team&1;
 	return 0;
+}
+
+void IGameController::PostReset()
+{
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(GameServer()->m_apPlayers[i])
+		{
+			GameServer()->m_apPlayers[i]->Respawn();
+			GameServer()->m_apPlayers[i]->m_Score = 0;
+			GameServer()->m_apPlayers[i]->m_ScoreStartTick = Server()->Tick();
+			GameServer()->m_apPlayers[i]->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
+		}
+	}
 }

@@ -59,6 +59,9 @@ protected:
 	int m_GameFlags;
 	int m_UnbalancedTick;
 	bool m_ForceBalanced;
+	
+	int m_NextZombie;
+	int m_ZombieSpawnTick;
 
 public:
 	const char *m_pGameType;
@@ -76,6 +79,9 @@ public:
 	void StartRound();
 	void EndRound();
 	void ChangeMap(const char *pToMap);
+	
+	void CureAll();
+	int PickZombie();
 
 	bool IsFriendlyFire(int ClientID1, int ClientID2);
 

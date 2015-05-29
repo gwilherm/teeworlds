@@ -64,6 +64,12 @@ class CGameContext : public IGameServer
 	static void ConClearVotes(IConsole::IResult *pResult, void *pUserData);
 	static void ConVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
+	
+	static void ConZombie(IConsole::IResult *pResult, void *pUserData);
+	static void ConCure(IConsole::IResult *pResult, void *pUserData);
+	static void ConIZombie(IConsole::IResult *pResult, void *pUserData);
+	static void ConAirstrike(IConsole::IResult *pResult, void *pUserData);
+	static void ConSuperJump(IConsole::IResult *pResult, void *pUserData);
 
 	CGameContext(int Resetting);
 	void Construct(int Resetting);
@@ -125,7 +131,7 @@ public:
 	void CreateDeath(vec2 Pos, int Who);
 	void CreateSound(vec2 Pos, int Sound, int Mask=-1);
 	void CreateSoundGlobal(int Sound, int Target=-1);
-
+    void CreateAirstrike(vec2 Pos, int Owner);
 
 	enum
 	{

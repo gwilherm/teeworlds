@@ -17,9 +17,6 @@ config:Finalize("config.lua")
 
 -- data compiler
 function Script(name)
-	if family == "windows" then
-		return str_replace(name, "/", "\\")
-	end
 	return "python " .. name
 end
 
@@ -146,7 +143,7 @@ function build(settings)
 	if config.compiler.driver == "cl" then
 		settings.cc.flags:Add("/wd4244")
 	else
-		settings.cc.flags:Add("-Wall", "-fno-exceptions")
+		settings.cc.flags:Add("-Wall", "--std=gnu++11")
 		if family == "windows" then
 			-- disable visibility attribute support for gcc on windows
 			settings.cc.defines:Add("NO_VIZ")
@@ -260,11 +257,11 @@ function build(settings)
 	end
 
 	-- build client, server, version server and master server
-	client_exe = Link(client_settings, "teeworlds", game_shared, game_client,
+	client_exe = Link(client_settings, "infection", game_shared, game_client,
 		engine, client, game_editor, zlib, pnglite, wavpack,
 		client_link_other, client_osxlaunch)
 
-	server_exe = Link(server_settings, "teeworlds_srv", engine, server,
+	server_exe = Link(server_settings, "infection_srv", engine, server,
 		game_shared, game_server, zlib, server_link_other)
 
 	serverlaunch = {}

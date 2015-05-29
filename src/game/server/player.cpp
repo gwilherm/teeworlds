@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <new>
 #include <engine/shared/config.h>
+#include <cstdio>
 #include "player.h"
 
 
@@ -21,6 +22,11 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_SpectatorID = SPEC_FREEVIEW;
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
+	
+	m_Zombie = 1;
+	m_Kills = 0;
+	m_HasSuperJump = false;
+	m_HasAirstrike = false;
 }
 
 CPlayer::~CPlayer()
@@ -123,11 +129,11 @@ void CPlayer::Snap(int SnappingClient)
 		return;
 
 	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
-	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
+	StrToInts(&pClientInfo->m_Clan0, 3, m_Zombie ? m_Zombie == 1 ? "Zombie" : "iZombie" : Server()->ClientClan(m_ClientID));
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
-	StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
-	pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
-	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
+	StrToInts(&pClientInfo->m_Skin0, 6, m_Zombie ? "cammo" : m_TeeInfos.m_SkinName);
+	pClientInfo->m_UseCustomColor = m_Zombie ? true : false;
+	pClientInfo->m_ColorBody = m_Zombie ? 3920896 : m_TeeInfos.m_ColorBody;
 	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, m_ClientID, sizeof(CNetObj_PlayerInfo)));
@@ -276,6 +282,56 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 				GameServer()->m_apPlayers[i]->m_SpectatorID = SPEC_FREEVIEW;
 		}
 	}
+}
+
+void CPlayer::Infect(int By, int Weapon) {
+    if (m_Zombie)
+        return;
+        
+    m_Zombie = 1;
+    
+    if (m_pCharacter) {
+        m_pCharacter->ClearWeapons();
+        m_pCharacter->GiveWeapon(WEAPON_HAMMER, -1);
+        m_pCharacter->SetWeapon(WEAPON_HAMMER);
+    }
+        
+    if (By == -1)
+        return;
+    
+    // send the kill message
+	CNetMsg_Sv_KillMsg Msg;
+	Msg.m_Killer = By;
+	Msg.m_Victim = m_ClientID;
+	Msg.m_Weapon = Weapon;
+	Msg.m_ModeSpecial = 0;
+	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+	
+	if (m_pCharacter)
+        GameServer()->CreatePlayerSpawn(m_pCharacter->m_Pos);
+}
+
+void CPlayer::Cure(int By, int Weapon) {
+    if (!m_Zombie)
+        return;
+    
+    m_Zombie = 0;
+    
+    if (m_pCharacter) {
+        m_pCharacter->GiveWeapon(WEAPON_HAMMER, -1);
+        m_pCharacter->GiveWeapon(WEAPON_GUN, 10);
+        m_pCharacter->SetWeapon(WEAPON_GUN);
+    }
+    
+    if (By == -1)
+        return;
+    
+    char str[512] = {0};
+    sprintf(str,
+            "%s was cured by %s",
+            Server()->ClientName(m_ClientID),
+            GameServer()->m_apPlayers[By] ? Server()->ClientName(By) : "(unknown)");
+    GameServer()->SendChatTarget(-1, str);
 }
 
 void CPlayer::TryRespawn()

@@ -65,7 +65,7 @@ MACRO_CONFIG_INT(SvRoundSwap, sv_round_swap, 1, 0, 1, CFGFLAG_SERVER, "Swap team
 MACRO_CONFIG_INT(SvPowerups, sv_powerups, 1, 0, 1, CFGFLAG_SERVER, "Allow powerups like ninja")
 MACRO_CONFIG_INT(SvScorelimit, sv_scorelimit, 20, 0, 1000, CFGFLAG_SERVER, "Score limit (0 disables)")
 MACRO_CONFIG_INT(SvTimelimit, sv_timelimit, 0, 0, 1000, CFGFLAG_SERVER, "Time limit in minutes (0 disables)")
-MACRO_CONFIG_STR(SvGametype, sv_gametype, 32, "dm", CFGFLAG_SERVER, "Game type (dm, tdm, ctf)")
+MACRO_CONFIG_STR(SvGametype, sv_gametype, 32, "infection", CFGFLAG_SERVER, "Game type (dm, tdm, ctf, infection)")
 MACRO_CONFIG_INT(SvTournamentMode, sv_tournament_mode, 0, 0, 1, CFGFLAG_SERVER, "Tournament mode. When enabled, players joins the server as spectator")
 MACRO_CONFIG_INT(SvSpamprotection, sv_spamprotection, 1, 0, 1, CFGFLAG_SERVER, "Spam protection")
 
@@ -82,6 +82,18 @@ MACRO_CONFIG_INT(SvVoteSpectateRejoindelay, sv_vote_spectate_rejoindelay, 3, 0, 
 MACRO_CONFIG_INT(SvVoteKick, sv_vote_kick, 1, 0, 1, CFGFLAG_SERVER, "Allow voting to kick players")
 MACRO_CONFIG_INT(SvVoteKickMin, sv_vote_kick_min, 0, 0, MAX_CLIENTS, CFGFLAG_SERVER, "Minimum number of players required to start a kick vote")
 MACRO_CONFIG_INT(SvVoteKickBantime, sv_vote_kick_bantime, 5, 0, 1440, CFGFLAG_SERVER, "The time to ban a player if kicked by vote. 0 makes it just use kick")
+
+// infection
+MACRO_CONFIG_INT(InfWallDelay, inf_walldelay, 1, 0, 0, CFGFLAG_SERVER, "Time before wall is active(in seconds)")
+MACRO_CONFIG_INT(InfWallLife, inf_walllife, 30, 0, 0, CFGFLAG_SERVER, "Time wall stays(in seconds)")
+MACRO_CONFIG_INT(InfWallLength, inf_walllength, 256, 0, 0, CFGFLAG_SERVER, "Length of a wall(in pixels)")
+MACRO_CONFIG_INT(InfInfectionDelay, inf_infectiondelay, 10, 0, 0, CFGFLAG_SERVER, "Delay before the IZombie gets chosen.")
+MACRO_CONFIG_INT(InfAirstrikeKills, inf_airstrikekills, 5, 0, 0, CFGFLAG_SERVER, "Kills needed for an airstrike.")
+MACRO_CONFIG_INT(InfSuperJumpKills, inf_superjumpkills, 2, 0, 0, CFGFLAG_SERVER, "Kills needed for superjump.")
+MACRO_CONFIG_INT(InfSuperJumpForce, inf_superjumpforce, 40, 0, 0, CFGFLAG_SERVER, "Strength of superjump.")
+MACRO_CONFIG_INT(InfZombieExplodes, inf_zombie_explodes, 1, 0, 2, CFGFLAG_SERVER, "Zombies explode. (0 = off, 1 = IZombie, 2 = All Zombies)")
+MACRO_CONFIG_STR(InfAirstrikeText, inf_airstrike_text, 512, "Red Alert. Military gave %s an airstrike!", CFGFLAG_SERVER, "Text send when someone earns an airstrike (%s = player name)")
+MACRO_CONFIG_STR(InfSuperJumpText, inf_superjump_text, 512, "%s mutated and can now superjump!", CFGFLAG_SERVER, "Text send when someone earns superjump (%s = player name)")
 
 // debug
 #ifdef CONF_DEBUG // this one can crash the server if not used correctly
