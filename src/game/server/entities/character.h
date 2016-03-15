@@ -9,6 +9,8 @@
 
 #include <game/gamecore.h>
 
+#include <game/server/entities/bloc.h>
+
 enum
 {
 	WEAPON_GAME = -3, // team switching etc
@@ -67,6 +69,8 @@ public:
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;
+
+	CBloc* m_pBloc;
 
 	bool m_Alive;
 

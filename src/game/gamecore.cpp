@@ -70,6 +70,7 @@ void CCharacterCore::Reset()
 	m_HookTick = 0;
 	m_HookState = HOOK_IDLE;
 	m_HookedPlayer = -1;
+	m_HookedBloc = -1;
 	m_Jumped = 0;
 	m_TriggeredEvents = 0;
 }
@@ -259,6 +260,7 @@ void CCharacterCore::Tick(bool UseInput)
 			{
 				// release hook
 				m_HookedPlayer = -1;
+				m_HookedBloc = -1;
 				m_HookState = HOOK_RETRACTED;
 				m_HookPos = m_Pos;
 			}
@@ -297,6 +299,7 @@ void CCharacterCore::Tick(bool UseInput)
 		if(m_HookedPlayer != -1 && (m_HookTick > SERVER_TICK_SPEED+SERVER_TICK_SPEED/5 || !m_pWorld->m_apCharacters[m_HookedPlayer]))
 		{
 			m_HookedPlayer = -1;
+			m_HookedBloc = -1;
 			m_HookState = HOOK_RETRACTED;
 			m_HookPos = m_Pos;
 		}

@@ -286,7 +286,7 @@ void CCharacter::FireWeapon()
 		case WEAPON_HAMMER:
 		{
 			// reset objects Hit
-			m_NumObjectsHit = 0;
+			/*m_NumObjectsHit = 0;
 			GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE);
 
 			CCharacter *apEnts[MAX_CLIENTS];
@@ -320,7 +320,11 @@ void CCharacter::FireWeapon()
 
 			// if we Hit anything, we have to wait for the reload
 			if(Hits)
-				m_ReloadTimer = Server()->TickSpeed()/3;
+				m_ReloadTimer = Server()->TickSpeed()/3;*/
+
+			if(m_pBloc)
+				m_pBloc->Reset();
+			m_pBloc = new CBloc(GameWorld(), vec2(m_Pos.x + m_Input.m_TargetX, m_Pos.y + m_Input.m_TargetY), this->m_pPlayer);
 
 		} break;
 

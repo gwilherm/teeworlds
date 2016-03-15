@@ -170,6 +170,7 @@ public:
 
 	CTuningParams m_Tuning;
 	class CCharacterCore *m_apCharacters[MAX_CLIENTS];
+	class CCharacterCore *m_apBlocs[MAX_CLIENTS];
 };
 
 class CCharacterCore
@@ -185,6 +186,7 @@ public:
 	int m_HookTick;
 	int m_HookState;
 	int m_HookedPlayer;
+	int m_HookedBloc;
 
 	int m_Jumped;
 
