@@ -164,7 +164,7 @@ void CBloc::Draw()
 			pObj->m_X = (int)(m_Pos.x-(ms_PhysWidth*10/2))+x*10;
 			pObj->m_Y = (int)m_Pos.y-y*10;
 
-			pObj->m_StartTick = Server()->Tick();
+			pObj->m_StartTick = Server()->Tick()-2;
 		}
 	}
 }
