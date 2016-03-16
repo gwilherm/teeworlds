@@ -1,25 +1,16 @@
 #include "bloc.h"
 
-/* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
-/* If you are missing that file, acquire a complete release at teeworlds.com.                */
-#include <new>
-#include <engine/shared/config.h>
 #include <game/server/gamecontext.h>
-#include <game/mapitems.h>
 
-#include "character.h"
-#include "laser.h"
-#include "projectile.h"
-
-// Character, "physical" player's part
 CBloc::CBloc(CGameWorld *pWorld, vec2 pos, CPlayer *Owner)
 : CEntity(pWorld, CGameWorld::ENTTYPE_BLOC)
 {
 	m_Pos = pos;
+	m_ProximityRadius = ms_PhysSize;
 
-	for(int i = 0; i < 36; i++)
+	for(int i = 0; i < ms_PhysSize; i++)
 	{
-		m_IDLine[i] = Server()->SnapNewID();
+		m_IDDot[i] = Server()->SnapNewID();
 	}
 
 	m_Core.Reset();
@@ -30,6 +21,8 @@ CBloc::CBloc(CGameWorld *pWorld, vec2 pos, CPlayer *Owner)
 	m_ReckoningTick = 0;
 	mem_zero(&m_SendCore, sizeof(m_SendCore));
 	mem_zero(&m_ReckoningCore, sizeof(m_ReckoningCore));
+
+	m_StartTick = Server()->Tick();
 
 	GameServer()->m_World.InsertEntity(this);
 }
@@ -159,28 +152,27 @@ void CBloc::Draw()
 
 	CNetObj_Projectile *pObj;
 	int i = 0;
-	for(int x = 0; x < 6; x++)
+	for(int x = 0; x < ms_PhysWidth; x++)
 	{
-		for(int y = 0; y < 6; y++)
+		for(int y = 0; y < ms_PhysHeight; y++)
 		{
-			pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_IDLine[i++], sizeof(CNetObj_Projectile)));
+			pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_IDDot[i++], sizeof(CNetObj_Projectile)));
 			if(!pObj)
-				return;
+				continue;
 
 			pObj->m_Type = WEAPON_SHOTGUN;
-			pObj->m_X = (int)m_Pos.x-x*10;
+			pObj->m_X = (int)(m_Pos.x-(ms_PhysWidth*10/2))+x*10;
 			pObj->m_Y = (int)m_Pos.y-y*10;
+
 			pObj->m_StartTick = Server()->Tick();
 		}
 	}
-
 }
 
 void CBloc::Snap(int SnappingClient)
 {
 	if(NetworkClipped(SnappingClient))
 		return;
-
 	/*CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, 8, sizeof(CNetObj_Character)));
 	if(!pCharacter)
 		return;

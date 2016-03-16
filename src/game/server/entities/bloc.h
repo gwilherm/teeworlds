@@ -14,7 +14,9 @@ class CBloc : public CEntity
 
 public:
 	//character's size
-	static const int ms_PhysSize = 28;
+	static const int ms_PhysHeight = 6;
+	static const int ms_PhysWidth = 6;
+	static const int ms_PhysSize = ms_PhysHeight * ms_PhysWidth;
 
 	CBloc(CGameWorld *pWorld, vec2 pos, CPlayer *Owner);
 
@@ -28,7 +30,9 @@ public:
 	bool Remove();
 
 private:
-	int m_IDLine[36];
+	int m_IDDot[ms_PhysSize];
+
+	int m_StartTick;
 
 	int m_ReloadTimer;
 
