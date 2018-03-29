@@ -1,22 +1,17 @@
+# use glob syntax.
+syntax: glob
+
+*.o
+*.pyc
+*.pyo
 bam
 .bam
 config.lua
-datasrc/__pycache__
-datasrc/*.pyc
-objs
+build
 src/game/generated
+__pycache__/
+scripts/work/
 SDL.dll
 freetype.dll
 autoexec.cfg
-
-crapnet*
-dilate*
-fake_server*
-map_resave*
-map_version*
-mastersrv*
-packetgen*
-teeworlds*
-teeworlds_srv*
-tileset_border*
-versionsrv*
+infection*
